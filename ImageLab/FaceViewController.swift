@@ -60,7 +60,7 @@ class FaceViewController: UIViewController   {
     func setupFilters(){
         filters = []
         
-        let filter = CIFilter(name:"CIColorMonochrome")!
+        let filter = CIFilter(name:"CIPinchDistortion")!
         
         filters.append(filter)
         
@@ -95,20 +95,50 @@ class FaceViewController: UIViewController   {
     func applyFiltersToFaces(inputImage:CIImage,features:[CIFaceFeature])->CIImage{
         var retImage = inputImage
         var filterCenter = CGPoint()
-        
+        var filterRadiusX = 0.0
+        var filterRadiusY = 0.0
         for f in features {
             //set where to apply filter
             filterCenter.x = f.bounds.midX
             filterCenter.y = f.bounds.midY
+            filterRadiusX = (f.bounds.maxX - f.bounds.minX)/2
+            filterRadiusY = (f.bounds.maxY - f.bounds.minY)/2
             
-            //do for each filter (assumes all filters have property, "inputCenter")
-            for filt in filters{
-                filt.setValue(retImage, forKey: kCIInputImageKey)
-    //                filt.setValue(CIVector(cgPoint: filterCenter), forKey: "inputCenter")
-                // could also manipulate the radius of the filter based on face size!
-                retImage = filt.outputImage!
-            }
+            let radialMask = CIFilter(name:"CIRadialGradient")!
+            let h = inputImage.extent.size.height
+            let w = inputImage.extent.size.width
+
+            // Adjust your circular hole position here
+            let imageCenter = CIVector(x:f.bounds.midX, y:f.bounds.midY)
+            radialMask.setValue(imageCenter, forKey:kCIInputCenterKey)
+            radialMask.setValue(filterRadiusX, forKey:"inputRadius0")
+            radialMask.setValue(filterRadiusY, forKey:"inputRadius1")
+            radialMask.setValue(CIColor(red:0, green:1, blue:0, alpha:1),
+                                forKey:"inputColor0")
+            radialMask.setValue(CIColor(red:0, green:1, blue:0, alpha:0),
+                                forKey:"inputColor1")
+            
+            let maskedVariableBlur = CIFilter(name:"CIMaskedVariableBlur")!
+            maskedVariableBlur.setValue(inputImage, forKey: kCIInputImageKey)
+            maskedVariableBlur.setValue(radialMask.outputImage, forKey: "inputMask")
+            let selectivelyFocusedCIImage = maskedVariableBlur.outputImage!
+            // Convert your result image to UIImage
+            
+           //do for each filter (assumes all filters have property, "inputCenter")
+            
+            retImage = selectivelyFocusedCIImage
+//            for filt in filters{
+//                filt.setValue(retImage, forKey: kCIInputImageKey)
+//                filt.setValue(CIVector(cgPoint: filterCenter), forKey: "inputCenter")
+//                //filt.setValue(100, forKey: "inputRadius")
+//
+//                // could also manipulate the radius of the filter based on face size!
+//                retImage = filt.outputImage!
+//            }
         }
+        
+        
+        
         return retImage
     }
     
