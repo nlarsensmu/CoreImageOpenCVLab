@@ -55,6 +55,9 @@
                                                 </label>
                                             </subviews>
                                         </tableViewCellContentView>
+                                        <connections>
+                                            <segue destination="Y8w-6a-Qy7" kind="show" id="XnY-Uh-qu5"/>
+                                        </connections>
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
@@ -141,6 +144,25 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="754" y="296"/>
+        </scene>
+        <!--Finger View Controller-->
+        <scene sceneID="ljX-uh-qJL">
+            <objects>
+                <viewController id="Y8w-6a-Qy7" customClass="FingerViewController" customModule="ImageLab" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="P5E-c2-Jia"/>
+                        <viewControllerLayoutGuide type="bottom" id="Aul-rr-mgM"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="PZC-XB-hiH">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="SKA-BU-sCx"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="oL0-gm-IMj" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="786" y="989"/>
         </scene>
     </scenes>
     <resources>

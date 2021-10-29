@@ -351,7 +351,7 @@ using namespace cv;
                                         8 * _image.elemSize(),                           // Bits per pixel
                                         _image.step[0],                                  // Bytes per row
                                         colorSpace,                                     // Colorspace
-                                        kCGImageAlphaNone | kCGBitmapByteOrderDefault,  // Bitmap info flags
+                                        kCGImageAlphaNoneSkipLast | kCGBitmapByteOrderDefault,  // Bitmap info flags
                                         provider,                                       // CGDataProviderRef
                                         NULL,                                           // Decode
                                         false,                                          // Should interpolate
@@ -395,7 +395,7 @@ using namespace cv;
                                         8 * _image.elemSize(),                           // Bits per pixel
                                         _image.step[0],                                  // Bytes per row
                                         colorSpace,                                     // Colorspace
-                                        kCGImageAlphaNone | kCGBitmapByteOrderDefault,  // Bitmap info flags
+                                        kCGImageAlphaNoneSkipLast | kCGBitmapByteOrderDefault,  // Bitmap info flags
                                         provider,                                       // CGDataProviderRef
                                         NULL,                                           // Decode
                                         false,                                          // Should interpolate
@@ -420,6 +420,57 @@ using namespace cv;
     return retImage;
 }
 
+int pos = 0;
+bool captured100 = false;
+-(bool) captured100{
+    return captured100;
+}
+float red[100];
+float green[100];
+float blue[100];
+-(float*)getRedData{
+    return red;
+}
+-(void)resetPos{
+    pos = 0;
+}
+-(bool)processFinger {
+    cv::Mat frame_gray,image_copy;
+    
+    char text[50];
+    Scalar avgPixelIntensity;
+    
+    cvtColor(_image, image_copy, CV_BGRA2BGR); // get rid of alpha for processing
+    avgPixelIntensity = cv::mean( image_copy );
+    sprintf(text,"Avg. B: %.0f, G: %.0f, R: %.0f", avgPixelIntensity.val[2],avgPixelIntensity.val[1],avgPixelIntensity.val[0]);
+    cv::putText(_image, text, cv::Point(10, 100), FONT_HERSHEY_PLAIN, 0.75, Scalar::all(255), 1, 2);
+    
+    float ts = 40;
+    if(pos < 2) { // to capture the finger initially
+        ts = 40;
+    }
+    else if(pos < 10) { // Always think there is a finger from frames 2-10
+        // Since there is a huge flash of color as the light turns on.
+        ts = 460;
+    } else { // to capture the finger after the light is established
+        ts = 60;
+    }
+    
+    bool finger = avgPixelIntensity.val[2] + avgPixelIntensity.val[1] < ts;
+    if(pos < 100 && finger) {
+        red[pos] = avgPixelIntensity.val[0];
+        green[pos] = avgPixelIntensity.val[1];
+        blue[pos] = avgPixelIntensity.val[2];
+        pos++;
+    } else if (!finger) {
+        pos = 0;
+    } else {
+        // 100 and finger
+        captured100 = true;
+    }
+    
+    return finger;
+}
 
 
 

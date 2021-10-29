@@ -35,5 +35,8 @@
 -(void)setTransforms:(CGAffineTransform)trans;
 
 -(void)loadHaarCascadeWithFilename:(NSString*)filename;
+-(bool)processFinger;
+-(bool)captured100;
+-(float*)getRedData;
 
 @end
