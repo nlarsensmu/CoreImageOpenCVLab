@@ -425,9 +425,9 @@ bool captured100 = false;
 -(bool) captured100{
     return captured100;
 }
-float red[100];
-float green[100];
-float blue[100];
+float red[1000];
+float green[1000];
+float blue[1000];
 -(float*)getRedData{
     return red;
 }
@@ -457,18 +457,24 @@ float blue[100];
     }
     
     bool finger = avgPixelIntensity.val[2] + avgPixelIntensity.val[1] < ts;
-    if(pos < 100 && finger) {
-        red[pos] = avgPixelIntensity.val[0];
-        green[pos] = avgPixelIntensity.val[1];
-        blue[pos] = avgPixelIntensity.val[2];
+    if(pos < 1002 && finger && pos > 1) {
+        red[pos - 2] = avgPixelIntensity.val[0];
+        green[pos - 2] = avgPixelIntensity.val[1];
+        blue[pos - 2] = avgPixelIntensity.val[2];
         pos++;
-    } else if (!finger) {
+        captured100 = false;
+    }
+    else if (pos <=1 && finger) {
+        pos++;
+        captured100 = false;
+    }
+    else if (!finger) {
         pos = 0;
+        captured100 = false;
     } else {
         // 100 and finger
         captured100 = true;
     }
-    
     return finger;
 }
 
