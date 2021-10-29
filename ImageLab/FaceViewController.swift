@@ -38,7 +38,9 @@ class FaceViewController: UIViewController   {
     }()
     
     //MARK: Outlets in view
-    
+    @IBOutlet weak var leftEyeOutlet: UILabel!
+    @IBOutlet weak var rightEyeOutlet: UILabel!
+    @IBOutlet weak var smilingOutlet: UILabel!
     
     //MARK: ViewController Hierarchy
     override func viewDidLoad() {
@@ -55,6 +57,11 @@ class FaceViewController: UIViewController   {
             videoManager.start()
         }
     
+        // hide all the labels to start
+        self.leftEyeOutlet.isHidden = true
+        self.rightEyeOutlet.isHidden = true
+        self.smilingOutlet.isHidden = true
+        
     
     }
     
@@ -112,7 +119,9 @@ class FaceViewController: UIViewController   {
     
     func getFaces(img:CIImage) -> [CIFaceFeature]{
         // this ungodly mess makes sure the image is the correct orientation
-        let optsFace = [CIDetectorImageOrientation:self.videoManager.ciOrientation]
+        let optsFace = [CIDetectorImageOrientation:self.videoManager.ciOrientation,
+                                   CIDetectorSmile:true,
+                                CIDetectorEyeBlink:true] as [String : Any]
         // get Face Features
         return self.detector.features(in: img, options: optsFace) as! [CIFaceFeature]
     }
@@ -120,7 +129,11 @@ class FaceViewController: UIViewController   {
     //MARK: Apply filters and apply feature detectors
     func applyFiltersToFaces(inputImage:CIImage,features:[CIFaceFeature])->CIImage{
         
+        var anyRightEyeClosed = false
+        var anyLeftEyeClosed = false
+        var anySmile = false
         var retImage = inputImage
+        
         for f in features {
             //set where to apply filter
             
@@ -151,12 +164,12 @@ class FaceViewController: UIViewController   {
                         subImage = applyFiltersToEye(faceImage: subImage,
                                                      position: f.leftEyePosition,
                                                      widthPercent: 1/10,
-                                                     heightPercent: 1/5)
+                                                     heightPercent: 1/5	)
                     }
                     if f.hasMouthPosition {
                         subImage = applyFiltersToEye(faceImage: subImage,
                                                      position: f.mouthPosition,
-                                                     widthPercent: 1/5,
+                                                     widthPercent: 1/8,
                                                      heightPercent: 1/3)
                     }
                 }
@@ -166,7 +179,23 @@ class FaceViewController: UIViewController   {
                     retImage = filter.outputImage!
                 }
             }
+            if f.hasSmile && f.hasMouthPosition { anySmile = true }
+            if f.leftEyeClosed && f.hasLeftEyePosition { anyLeftEyeClosed = true }
+            if f.rightEyeClosed && f.hasRightEyePosition { anyRightEyeClosed = true }
         }
+        
+        // Act on any face detection
+        DispatchQueue.main.async {
+            if anySmile { self.smilingOutlet.isHidden = false }
+            else { self.smilingOutlet.isHidden = true }
+            
+            if anyLeftEyeClosed { self.leftEyeOutlet.isHidden = false }
+            else { self.leftEyeOutlet.isHidden = true }
+            
+            if anyRightEyeClosed { self.rightEyeOutlet.isHidden = false }
+            else { self.rightEyeOutlet.isHidden = true }
+        }
+        
         return retImage
     }
     
