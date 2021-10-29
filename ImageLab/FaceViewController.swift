@@ -107,34 +107,31 @@ class FaceViewController: UIViewController   {
             let radialMask = CIFilter(name:"CIRadialGradient")!
             let h = inputImage.extent.size.height
             let w = inputImage.extent.size.width
-
-            // Adjust your circular hole position here
-            let imageCenter = CIVector(x:f.bounds.midX, y:f.bounds.midY)
-            radialMask.setValue(imageCenter, forKey:kCIInputCenterKey)
-            radialMask.setValue(filterRadiusX, forKey:"inputRadius0")
-            radialMask.setValue(filterRadiusY, forKey:"inputRadius1")
-            radialMask.setValue(CIColor(red:0, green:1, blue:0, alpha:1),
-                                forKey:"inputColor0")
-            radialMask.setValue(CIColor(red:0, green:1, blue:0, alpha:0),
-                                forKey:"inputColor1")
             
-            let maskedVariableBlur = CIFilter(name:"CIMaskedVariableBlur")!
-            maskedVariableBlur.setValue(inputImage, forKey: kCIInputImageKey)
-            maskedVariableBlur.setValue(radialMask.outputImage, forKey: "inputMask")
-            let selectivelyFocusedCIImage = maskedVariableBlur.outputImage!
-            // Convert your result image to UIImage
+            let cropFilter = CIFilter(name: "CICrop")!
+            cropFilter.setValue(inputImage, forKey: kCIInputImageKey)
+            let rect = CIVector(cgRect: CGRect(x: f.bounds.minX, y: f.bounds.minY,
+                                               width: f.bounds.minX + f.bounds.width, height: f.bounds.minY + f.bounds.height))
             
-           //do for each filter (assumes all filters have property, "inputCenter")
+            cropFilter.setValue(rect, forKey: "inputRectangle")
             
-            retImage = selectivelyFocusedCIImage
-//            for filt in filters{
-//                filt.setValue(retImage, forKey: kCIInputImageKey)
-//                filt.setValue(CIVector(cgPoint: filterCenter), forKey: "inputCenter")
-//                //filt.setValue(100, forKey: "inputRadius")
-//
-//                // could also manipulate the radius of the filter based on face size!
-//                retImage = filt.outputImage!
-//            }
+            var subImage = cropFilter.outputImage!
+            
+            // Add MonoChromeFilter.
+            
+            let monochromeFilter = CIFilter(name: "CIColorMonochrome")!
+            monochromeFilter.setValue(subImage, forKey: kCIInputImageKey)
+            monochromeFilter.setValue(CIColor.yellow, forKey: "inputColor")
+            subImage = monochromeFilter.outputImage!
+            
+            let compositeFilter = CIFilter(name:"CISourceOverCompositing")!
+            compositeFilter.setValue(subImage, forKey: kCIInputImageKey)
+            compositeFilter.setValue(inputImage, forKey: "InputBackgroundImage")
+            
+            retImage = compositeFilter.outputImage!
+            
+            return retImage
+            
         }
         
         
@@ -158,5 +155,43 @@ class FaceViewController: UIViewController   {
 //
 //        stageLabel.text = "Stage: \(self.bridge.processType)"
 //    }
+
+
 }
 
+
+// MARK: Useful
+// copied from https://stackoverflow.com/questions/27896410/given-a-ciimage-what-is-the-fastest-way-to-write-image-data-to-disk
+extension CIImage {
+
+    @objc func saveJPEG(_ name:String, inDirectoryURL:URL? = nil, quality:CGFloat = 1.0) -> String? {
+        
+        var destinationURL = inDirectoryURL
+        
+        if destinationURL == nil {
+            destinationURL = try? FileManager.default.url(for:.documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        }
+        
+        if var destinationURL = destinationURL {
+            
+            destinationURL = destinationURL.appendingPathComponent(name)
+            
+            if let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) {
+                
+                do {
+
+                    let context = CIContext()
+
+                    try context.writeJPEGRepresentation(of: self, to: destinationURL, colorSpace: colorSpace, options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption : quality])
+                    
+                    return destinationURL.path
+                    
+                } catch {
+                    return nil
+                }
+            }
+        }
+        
+        return nil
+    }
+}

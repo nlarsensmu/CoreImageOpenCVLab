@@ -127,7 +127,7 @@
 				TargetAttributes = {
 					B650B3161D8340F0000114A1 = {
 						CreatedOnToolsVersion = 7.3.1;
-						DevelopmentTeam = 2U52JNW2M5;
+						DevelopmentTeam = XGS97V26UJ;
 						LastSwiftMigration = 1200;
 					};
 				};
@@ -315,7 +315,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				DEVELOPMENT_TEAM = 2U52JNW2M5;
+				DEVELOPMENT_TEAM = XGS97V26UJ;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -324,7 +324,7 @@
 				INFOPLIST_FILE = ImageLab/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.6;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = SMU.ImageLaba;
+				PRODUCT_BUNDLE_IDENTIFIER = SMU.ImageLabaasdf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "ImageLab/ImageLab-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -337,7 +337,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				DEVELOPMENT_TEAM = 2U52JNW2M5;
+				DEVELOPMENT_TEAM = XGS97V26UJ;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -346,7 +346,7 @@
 				INFOPLIST_FILE = ImageLab/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.6;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = SMU.ImageLaba;
+				PRODUCT_BUNDLE_IDENTIFIER = SMU.ImageLabaasdf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "ImageLab/ImageLab-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
