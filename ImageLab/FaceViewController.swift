@@ -37,8 +37,6 @@ class FaceViewController: UIViewController   {
         return detector
     }()
     
-    let bridge = OpenCVBridge()
-    
     //MARK: Outlets in view
     
     
@@ -117,10 +115,7 @@ class FaceViewController: UIViewController   {
         let optsFace = [CIDetectorImageOrientation:self.videoManager.ciOrientation]
         // get Face Features
         return self.detector.features(in: img, options: optsFace) as! [CIFaceFeature]
-        
     }
-    
-    
     
     //MARK: Apply filters and apply feature detectors
     func applyFiltersToFaces(inputImage:CIImage,features:[CIFaceFeature])->CIImage{
@@ -147,10 +142,22 @@ class FaceViewController: UIViewController   {
                     filter.setValue(CIColor.yellow, forKey: "inputColor")
                     subImage = filter.outputImage!
                     if f.hasRightEyePosition {
-                        subImage = applyFiltersToEye(faceImage: subImage, position: f.rightEyePosition)
+                        subImage = applyFiltersToEye(faceImage: subImage,
+                                                     position: f.rightEyePosition,
+                                                     widthPercent: 1/10,
+                                                     heightPercent: 1/5)
                     }
                     if f.hasLeftEyePosition {
-                        subImage = applyFiltersToEye(faceImage: subImage, position: f.leftEyePosition)
+                        subImage = applyFiltersToEye(faceImage: subImage,
+                                                     position: f.leftEyePosition,
+                                                     widthPercent: 1/10,
+                                                     heightPercent: 1/5)
+                    }
+                    if f.hasMouthPosition {
+                        subImage = applyFiltersToEye(faceImage: subImage,
+                                                     position: f.mouthPosition,
+                                                     widthPercent: 1/5,
+                                                     heightPercent: 1/3)
                     }
                 }
                 else if filter.name == "CISourceOverCompositing" {
@@ -158,14 +165,13 @@ class FaceViewController: UIViewController   {
                     filter.setValue(retImage, forKey: "InputBackgroundImage")
                     retImage = filter.outputImage!
                 }
-                
             }
         }
         return retImage
     }
     
     // Take the yellow face image and add a blue filter to the eyes
-    func applyFiltersToEye(faceImage:CIImage, position:CGPoint) -> CIImage{
+    func applyFiltersToEye(faceImage:CIImage, position:CGPoint, widthPercent:Double, heightPercent:Double) -> CIImage{
         var retImage = faceImage
         
         var subImage = faceImage
@@ -173,8 +179,8 @@ class FaceViewController: UIViewController   {
             // Crop out the eye
             if filter.name == "CICrop" {
                 filter.setValue(retImage, forKey: kCIInputImageKey)
-                let eyeWidth = subImage.extent.width/10
-                let eyeHeight = subImage.extent.height/5
+                let eyeWidth = subImage.extent.width*widthPercent
+                let eyeHeight = subImage.extent.height*heightPercent
                 let rect = CIVector(cgRect: CGRect(x: position.x-eyeWidth/2,
                                                    y: position.y-eyeHeight/2,
                                                    width: eyeWidth,
@@ -186,7 +192,7 @@ class FaceViewController: UIViewController   {
             // Highlight only the face from the subImage
             else if filter.name == "CIColorMonochrome" {
                 filter.setValue(subImage, forKey: kCIInputImageKey)
-                filter.setValue(CIColor.blue, forKey: "inputColor")
+                filter.setValue(CIColor.green, forKey: "inputColor")
                 subImage = filter.outputImage!
             }
             else if filter.name == "CISourceOverCompositing" {
@@ -217,41 +223,4 @@ class FaceViewController: UIViewController   {
 //    }
 
 
-}
-
-
-// MARK: Useful
-// copied from https://stackoverflow.com/questions/27896410/given-a-ciimage-what-is-the-fastest-way-to-write-image-data-to-disk
-extension CIImage {
-
-    @objc func saveJPEG(_ name:String, inDirectoryURL:URL? = nil, quality:CGFloat = 1.0) -> String? {
-        
-        var destinationURL = inDirectoryURL
-        
-        if destinationURL == nil {
-            destinationURL = try? FileManager.default.url(for:.documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        }
-        
-        if var destinationURL = destinationURL {
-            
-            destinationURL = destinationURL.appendingPathComponent(name)
-            
-            if let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) {
-                
-                do {
-
-                    let context = CIContext()
-
-                    try context.writeJPEGRepresentation(of: self, to: destinationURL, colorSpace: colorSpace, options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption : quality])
-                    
-                    return destinationURL.path
-                    
-                } catch {
-                    return nil
-                }
-            }
-        }
-        
-        return nil
-    }
 }
