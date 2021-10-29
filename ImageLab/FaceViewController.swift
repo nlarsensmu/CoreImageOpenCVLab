@@ -44,7 +44,7 @@ class FaceViewController: UIViewController   {
         super.viewDidLoad()
         
         self.view.backgroundColor = nil
-        self.setupFilters()
+        self.setupFaceFilters()
         
         self.videoManager.setProcessingBlock(newProcessBlock: self.processImage)
         self.videoManager.setCameraPosition(position: .front  )
@@ -57,12 +57,21 @@ class FaceViewController: UIViewController   {
     }
     
     //MARK: Setup filtering
-    func setupFilters(){
+    func setupFaceFilters(){
         filters = []
         
-        let filter = CIFilter(name:"CIPinchDistortion")!
+        // Add a crop filter to get only the face
+        let cropFilter = CIFilter(name: "CICrop")!
+        filters.append(cropFilter)
         
-        filters.append(filter)
+        // Add MonoChromeFilter.
+        let monochromeFilter = CIFilter(name: "CIColorMonochrome")!
+        monochromeFilter.setValue(CIColor.yellow, forKey: "inputColor")
+        filters.append(monochromeFilter)
+        
+        // Add a composite filter to put the new face back in the image.
+        let compositeFilter = CIFilter(name:"CISourceOverCompositing")!
+        filters.append(compositeFilter)
         
     }
     
@@ -93,49 +102,38 @@ class FaceViewController: UIViewController   {
     
     //MARK: Apply filters and apply feature detectors
     func applyFiltersToFaces(inputImage:CIImage,features:[CIFaceFeature])->CIImage{
+        
         var retImage = inputImage
-        var filterCenter = CGPoint()
-        var filterRadiusX = 0.0
-        var filterRadiusY = 0.0
         for f in features {
             //set where to apply filter
-            filterCenter.x = f.bounds.midX
-            filterCenter.y = f.bounds.midY
-            filterRadiusX = (f.bounds.maxX - f.bounds.minX)/2
-            filterRadiusY = (f.bounds.maxY - f.bounds.minY)/2
             
-            let radialMask = CIFilter(name:"CIRadialGradient")!
-            let h = inputImage.extent.size.height
-            let w = inputImage.extent.size.width
-            
-            let cropFilter = CIFilter(name: "CICrop")!
-            cropFilter.setValue(inputImage, forKey: kCIInputImageKey)
-            let rect = CIVector(cgRect: CGRect(x: f.bounds.minX, y: f.bounds.minY,
-                                               width: f.bounds.minX + f.bounds.width, height: f.bounds.minY + f.bounds.height))
-            
-            cropFilter.setValue(rect, forKey: "inputRectangle")
-            
-            var subImage = cropFilter.outputImage!
-            
-            // Add MonoChromeFilter.
-            
-            let monochromeFilter = CIFilter(name: "CIColorMonochrome")!
-            monochromeFilter.setValue(subImage, forKey: kCIInputImageKey)
-            monochromeFilter.setValue(CIColor.yellow, forKey: "inputColor")
-            subImage = monochromeFilter.outputImage!
-            
-            let compositeFilter = CIFilter(name:"CISourceOverCompositing")!
-            compositeFilter.setValue(subImage, forKey: kCIInputImageKey)
-            compositeFilter.setValue(inputImage, forKey: "InputBackgroundImage")
-            
-            retImage = compositeFilter.outputImage!
-            
+            var subImage:CIImage = inputImage
+            for filter in filters {
+                // Crop out the face
+                if filter.name == "CICrop" {
+                    filter.setValue(retImage, forKey: kCIInputImageKey)
+                    let rect = CIVector(cgRect: CGRect(x: f.bounds.minX,
+                                                       y: f.bounds.minY,
+                                                       width: f.bounds.minX + f.bounds.width,
+                                                       height: f.bounds.minY + f.bounds.height))
+                    filter.setValue(rect, forKey: "inputRectangle")
+                    subImage = filter.outputImage!
+                }
+                // Highlight only the face from the subImage
+                else if filter.name == "CIColorMonochrome" {
+                    filter.setValue(subImage, forKey: kCIInputImageKey)
+                    filter.setValue(CIColor.yellow, forKey: "inputColor")
+                    subImage = filter.outputImage!
+                }
+                else if filter.name == "CISourceOverCompositing" {
+                    filter.setValue(subImage, forKey: kCIInputImageKey)
+                    filter.setValue(retImage, forKey: "InputBackgroundImage")
+                    retImage = filter.outputImage!
+                }
+                
+            }
             return retImage
-            
         }
-        
-        
-        
         return retImage
     }
     
