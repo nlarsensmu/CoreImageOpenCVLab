@@ -13,6 +13,7 @@ class FaceViewController: UIViewController   {
 
     //MARK: Class Properties
     var filtersFaces : [CIFilter]! = nil
+    var filtersEyes : [CIFilter]! = nil
     lazy var videoManager:VideoAnalgesic! = {
         let tmpManager = VideoAnalgesic(mainView: self.view)
         tmpManager.setCameraPosition(position: .back)
@@ -24,7 +25,9 @@ class FaceViewController: UIViewController   {
         // create dictionary for face detection
         // HINT: you need to manipulate these properties for better face detection efficiency
         let optsDetector = [CIDetectorAccuracy:CIDetectorAccuracyHigh,
-                            CIDetectorTracking:true] as [String : Any]
+                            CIDetectorTracking:true,
+                               CIDetectorSmile:true,
+                            CIDetectorEyeBlink:true] as [String : Any]
         
         // setup a face detector in swift
         let detector = CIDetector(ofType: CIDetectorTypeFace,
@@ -45,6 +48,7 @@ class FaceViewController: UIViewController   {
         
         self.view.backgroundColor = nil
         self.setupFaceFilters()
+        self.setupEyeFilters()
         
         self.videoManager.setProcessingBlock(newProcessBlock: self.processImage)
         self.videoManager.setCameraPosition(position: .front  )
@@ -72,6 +76,24 @@ class FaceViewController: UIViewController   {
         // Add a composite filter to put the new face back in the image.
         let compositeFilter = CIFilter(name:"CISourceOverCompositing")!
         filtersFaces.append(compositeFilter)
+        
+    }
+    
+    func setupEyeFilters(){
+        filtersEyes = []
+        
+        // Add a crop filter to get only the face
+        let cropFilter = CIFilter(name: "CICrop")!
+        filtersEyes.append(cropFilter)
+        
+        // Add MonoChromeFilter.
+        let monochromeFilter = CIFilter(name: "CIColorMonochrome")!
+        monochromeFilter.setValue(CIColor.blue, forKey: "inputColor")
+        filtersEyes.append(monochromeFilter)
+        
+        // Add a composite filter to put the new face back in the image.
+        let compositeFilter = CIFilter(name:"CISourceOverCompositing")!
+        filtersEyes.append(compositeFilter)
         
     }
     
@@ -124,6 +146,12 @@ class FaceViewController: UIViewController   {
                     filter.setValue(subImage, forKey: kCIInputImageKey)
                     filter.setValue(CIColor.yellow, forKey: "inputColor")
                     subImage = filter.outputImage!
+                    if f.hasRightEyePosition {
+                        subImage = applyFiltersToEye(faceImage: subImage, position: f.rightEyePosition)
+                    }
+                    if f.hasLeftEyePosition {
+                        subImage = applyFiltersToEye(faceImage: subImage, position: f.leftEyePosition)
+                    }
                 }
                 else if filter.name == "CISourceOverCompositing" {
                     filter.setValue(subImage, forKey: kCIInputImageKey)
@@ -133,6 +161,41 @@ class FaceViewController: UIViewController   {
                 
             }
         }
+        return retImage
+    }
+    
+    // Take the yellow face image and add a blue filter to the eyes
+    func applyFiltersToEye(faceImage:CIImage, position:CGPoint) -> CIImage{
+        var retImage = faceImage
+        
+        var subImage = faceImage
+        for filter in filtersEyes {
+            // Crop out the eye
+            if filter.name == "CICrop" {
+                filter.setValue(retImage, forKey: kCIInputImageKey)
+                let eyeWidth = subImage.extent.width/10
+                let eyeHeight = subImage.extent.height/5
+                let rect = CIVector(cgRect: CGRect(x: position.x-eyeWidth/2,
+                                                   y: position.y-eyeHeight/2,
+                                                   width: eyeWidth,
+                                                   height: eyeHeight))
+                
+                filter.setValue(rect, forKey: "inputRectangle")
+                subImage = filter.outputImage!
+            }
+            // Highlight only the face from the subImage
+            else if filter.name == "CIColorMonochrome" {
+                filter.setValue(subImage, forKey: kCIInputImageKey)
+                filter.setValue(CIColor.blue, forKey: "inputColor")
+                subImage = filter.outputImage!
+            }
+            else if filter.name == "CISourceOverCompositing" {
+                filter.setValue(subImage, forKey: kCIInputImageKey)
+                filter.setValue(retImage, forKey: "InputBackgroundImage")
+                retImage = filter.outputImage!
+            }
+        }
+        
         return retImage
     }
     
