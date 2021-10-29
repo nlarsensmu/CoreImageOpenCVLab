@@ -12,7 +12,7 @@ import AVFoundation
 class FaceViewController: UIViewController   {
 
     //MARK: Class Properties
-    var filters : [CIFilter]! = nil
+    var filtersFaces : [CIFilter]! = nil
     lazy var videoManager:VideoAnalgesic! = {
         let tmpManager = VideoAnalgesic(mainView: self.view)
         tmpManager.setCameraPosition(position: .back)
@@ -58,20 +58,20 @@ class FaceViewController: UIViewController   {
     
     //MARK: Setup filtering
     func setupFaceFilters(){
-        filters = []
+        filtersFaces = []
         
         // Add a crop filter to get only the face
         let cropFilter = CIFilter(name: "CICrop")!
-        filters.append(cropFilter)
+        filtersFaces.append(cropFilter)
         
         // Add MonoChromeFilter.
         let monochromeFilter = CIFilter(name: "CIColorMonochrome")!
         monochromeFilter.setValue(CIColor.yellow, forKey: "inputColor")
-        filters.append(monochromeFilter)
+        filtersFaces.append(monochromeFilter)
         
         // Add a composite filter to put the new face back in the image.
         let compositeFilter = CIFilter(name:"CISourceOverCompositing")!
-        filters.append(compositeFilter)
+        filtersFaces.append(compositeFilter)
         
     }
     
@@ -108,14 +108,14 @@ class FaceViewController: UIViewController   {
             //set where to apply filter
             
             var subImage:CIImage = inputImage
-            for filter in filters {
+            for filter in filtersFaces {
                 // Crop out the face
                 if filter.name == "CICrop" {
                     filter.setValue(retImage, forKey: kCIInputImageKey)
                     let rect = CIVector(cgRect: CGRect(x: f.bounds.minX,
                                                        y: f.bounds.minY,
-                                                       width: f.bounds.minX + f.bounds.width,
-                                                       height: f.bounds.minY + f.bounds.height))
+                                                       width: f.bounds.width,
+                                                       height: f.bounds.height))
                     filter.setValue(rect, forKey: "inputRectangle")
                     subImage = filter.outputImage!
                 }
@@ -132,7 +132,6 @@ class FaceViewController: UIViewController   {
                 }
                 
             }
-            return retImage
         }
         return retImage
     }
