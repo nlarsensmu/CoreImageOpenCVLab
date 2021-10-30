@@ -36,7 +36,10 @@
 
 -(void)loadHaarCascadeWithFilename:(NSString*)filename;
 -(bool)processFinger;
--(bool)captured100;
+-(bool)capturedEnough;
+-(bool)fingerSensed;
 -(float*)getRedData;
+
+-(void)resetBuffer;
 
 @end

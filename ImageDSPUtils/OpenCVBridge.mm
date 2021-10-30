@@ -421,19 +421,36 @@ using namespace cv;
 }
 
 int pos = 0;
-bool captured100 = false;
--(bool) captured100{
-    return captured100;
+bool capturedEnough = false;
+-(bool) capturedEnough{
+    return capturedEnough;
 }
-float red[1000];
-float green[1000];
-float blue[1000];
+
+bool fingerSensed = false;
+-(bool) fingerSensed {
+    return fingerSensed;
+}
+
+float red[100];
+float green[100];
+float blue[100];
 -(float*)getRedData{
     return red;
 }
 -(void)resetPos{
     pos = 0;
 }
+
+-(void)resetBuffer {
+    for (int i = 0; i < 100; i++) {
+        red[i] = 0.0;
+        green[i] = 0.0;
+        blue[i] = 0.0;
+    }
+    pos = 0;
+    capturedEnough = false;
+}
+
 -(bool)processFinger {
     cv::Mat frame_gray,image_copy;
     
@@ -456,26 +473,28 @@ float blue[1000];
         ts = 60;
     }
     
-    bool finger = avgPixelIntensity.val[2] + avgPixelIntensity.val[1] < ts;
-    if(pos < 1002 && finger && pos > 1) {
+    fingerSensed = avgPixelIntensity.val[2] + avgPixelIntensity.val[1] < ts;
+    
+    int bufferSize = 100;
+    
+    if(pos < bufferSize + 2 && fingerSensed && pos > 1) { // If the finger was sensed and we need more samples
         red[pos - 2] = avgPixelIntensity.val[0];
         green[pos - 2] = avgPixelIntensity.val[1];
         blue[pos - 2] = avgPixelIntensity.val[2];
         pos++;
-        captured100 = false;
+        capturedEnough = false;
     }
-    else if (pos <=1 && finger) {
+    else if (pos <= 1 && fingerSensed) { // The finger was sensed and we are accpeting it no matter what
         pos++;
-        captured100 = false;
+        capturedEnough = false;
     }
-    else if (!finger) {
+    else if (!fingerSensed) { // The finger has left the screen
         pos = 0;
-        captured100 = false;
-    } else {
-        // 100 and finger
-        captured100 = true;
+        capturedEnough = false;
+    } else { // We have captured enough
+        capturedEnough = true;
     }
-    return finger;
+    return fingerSensed;
 }
 
 
