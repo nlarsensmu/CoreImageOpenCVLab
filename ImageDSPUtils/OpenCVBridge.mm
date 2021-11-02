@@ -7,7 +7,7 @@
 //
 
 #import "OpenCVBridge.hh"
-
+#import <Accelerate/Accelerate.h>
 
 using namespace cv;
 
@@ -431,60 +431,79 @@ bool fingerSensed = false;
     return fingerSensed;
 }
 
-float red[100];
-float green[100];
-float blue[100];
+
 -(float*)getRedData{
     return red;
 }
 -(void)resetPos{
     pos = 0;
 }
+-(float)getLastRed{
+    return lastRed;
+}
+
 
 -(void)resetBuffer {
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < BUFFER_SIZE; i++) {
         red[i] = 0.0;
         green[i] = 0.0;
         blue[i] = 0.0;
     }
-    pos = 0;
+    pos = skippedValues;
     capturedEnough = false;
 }
 
--(bool)processFinger {
+const int BUFFER_SIZE = 200;
+
+-(int)getBufferSize {
+    return BUFFER_SIZE;
+}
+
+const int beforeFlashIndex = 2;
+const int flashTurningOnIndex = 30;
+const int skippedValues = beforeFlashIndex + flashTurningOnIndex; //12
+
+float red[BUFFER_SIZE];
+float green[BUFFER_SIZE];
+float blue[BUFFER_SIZE];
+float lastRed = 0.0;
+
+-(bool)processFinger:(int *)peaksOut
+                outD:(int *)distOut {
+    
+    *peaksOut = 0;
+    *distOut = 0;
+    
     cv::Mat frame_gray,image_copy;
     
-    char text[50];
     Scalar avgPixelIntensity;
     
     cvtColor(_image, image_copy, CV_BGRA2BGR); // get rid of alpha for processing
     avgPixelIntensity = cv::mean( image_copy );
-    sprintf(text,"Avg. B: %.0f, G: %.0f, R: %.0f", avgPixelIntensity.val[2],avgPixelIntensity.val[1],avgPixelIntensity.val[0]);
-    cv::putText(_image, text, cv::Point(10, 100), FONT_HERSHEY_PLAIN, 0.75, Scalar::all(255), 1, 2);
     
     float ts = 40;
-    if(pos < 2) { // to capture the finger initially
+    if(pos < beforeFlashIndex) { // to capture the finger initially
         ts = 40;
     }
-    else if(pos < 10) { // Always think there is a finger from frames 2-10
+    else if(pos < flashTurningOnIndex) { // Always think there is a finger from frames 2-10
         // Since there is a huge flash of color as the light turns on.
-        ts = 460;
+        ts = 999;
     } else { // to capture the finger after the light is established
         ts = 60;
     }
     
     fingerSensed = avgPixelIntensity.val[2] + avgPixelIntensity.val[1] < ts;
     
-    int bufferSize = 100;
-    
-    if(pos < bufferSize + 2 && fingerSensed && pos > 1) { // If the finger was sensed and we need more samples
-        red[pos - 2] = avgPixelIntensity.val[0];
-        green[pos - 2] = avgPixelIntensity.val[1];
-        blue[pos - 2] = avgPixelIntensity.val[2];
+    if(pos < BUFFER_SIZE + skippedValues && fingerSensed && pos >= skippedValues) { // If the finger was sensed and we need more samples
+        // Ignore the frist two (beforeFlashIndex) frames they tend to be off
+        red[pos - skippedValues] = avgPixelIntensity.val[0];
+        lastRed = avgPixelIntensity.val[0];
+        green[pos - skippedValues] = avgPixelIntensity.val[1];
+        blue[pos - skippedValues] = avgPixelIntensity.val[2];
         pos++;
         capturedEnough = false;
     }
-    else if (pos <= 1 && fingerSensed) { // The finger was sensed and we are accpeting it no matter what
+    else if (pos < skippedValues && fingerSensed) { // The finger was sensed and we are accpeting it no matter what
         pos++;
         capturedEnough = false;
     }
@@ -496,7 +515,5 @@ float blue[100];
     }
     return fingerSensed;
 }
-
-
 
 @end

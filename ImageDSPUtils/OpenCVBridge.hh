@@ -35,11 +35,18 @@
 -(void)setTransforms:(CGAffineTransform)trans;
 
 -(void)loadHaarCascadeWithFilename:(NSString*)filename;
--(bool)processFinger;
+-(bool)processFinger:(int *)peaksOut
+                outD:(int *)distOut;
 -(bool)capturedEnough;
 -(bool)fingerSensed;
 -(float*)getRedData;
+-(float)getLastRed;
+-(int)getBufferSize;
 
 -(void)resetBuffer;
-
+-(int)getFundamentalPeaksFromBuffer:(float *)magBuffer
+                              withLength:(NSUInteger)length
+                         usingWindowSize:(NSUInteger)windowSize
+                 andPeakMagnitudeMinimum:(float)peakMagnitude
+                    distanceBetweenPeaks:(long *)dist;
 @end
