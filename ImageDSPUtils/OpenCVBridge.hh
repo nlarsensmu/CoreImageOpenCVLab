@@ -28,8 +28,6 @@
 //get the image inside the original bounds
 -(CIImage*)getImageComposite;
 
-// call this to perfrom processing (user controlled for better transparency)
--(void)processImage;
 
 // for the video manager transformations
 -(void)setTransforms:(CGAffineTransform)trans;
@@ -44,9 +42,5 @@
 -(int)getBufferSize;
 
 -(void)resetBuffer;
--(int)getFundamentalPeaksFromBuffer:(float *)magBuffer
-                              withLength:(NSUInteger)length
-                         usingWindowSize:(NSUInteger)windowSize
-                 andPeakMagnitudeMinimum:(float)peakMagnitude
-                    distanceBetweenPeaks:(long *)dist;
+
 @end

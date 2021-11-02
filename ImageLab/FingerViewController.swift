@@ -158,7 +158,7 @@ class FingerViewController: UIViewController {
                              withBounds: retImage.extent, // the first face bounds
                              andContext: self.videoManager.getCIContext())
         
-        self.bridge.processImage()
+        
         var distance:Int32 = 0
         var peaks:Int32 = 0
         
