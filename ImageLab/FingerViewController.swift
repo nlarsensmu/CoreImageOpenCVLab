@@ -45,10 +45,12 @@ class FingerViewController: UIViewController {
         
         fingerData = Array.init(repeating: 0.0, count:Int(bridge.getBufferSize()))
         
+        //Time to update the finger data
         Timer.scheduledTimer(timeInterval: 0.05, target: self,
             selector: #selector(self.updateFingerData),
             userInfo: nil,
             repeats: true)
+        //Timer to update the graph
         Timer.scheduledTimer(timeInterval: 0.05, target: self,
             selector: #selector(self.updateGraph),
             userInfo: nil,
@@ -62,8 +64,10 @@ class FingerViewController: UIViewController {
     @IBOutlet weak var peaksLabelDebug: UILabel!
     @IBOutlet weak var distanceLabelDebug: UILabel!
     
+    //return the data in order so. since the data in fingerData is a  type of circular array at fingerDataPos
     func getFingerDataInOrder() -> [Float]{
         
+        //If fingerDataPos is more than 100 just return that contiguous part
         if fingerDataPos >= 100 {
             var data:[Float] = []
             data.append(contentsOf: fingerData[fingerDataPos-100..<fingerDataPos])
@@ -77,6 +81,7 @@ class FingerViewController: UIViewController {
     }
     
     @objc
+    //runs as a result of the timer in view did load. Just updates the timer.
     func updateGraph() {
         
         self.graph?.updateGraph(
@@ -87,6 +92,8 @@ class FingerViewController: UIViewController {
     }
     
     @objc
+    //runs from the timer in view did load.
+    //updates the red data and calculates the PPG if it can.
     func updateFingerData() {
         //TOD: Remove dummy data
         
@@ -116,11 +123,13 @@ class FingerViewController: UIViewController {
             
             bridge.resetBuffer()
         }
+        //we have not captured enough for a reading, but the finger is still there
         else if bridge.fingerSensed() && PPG == 0.0 {
             DispatchQueue.main.async {
                 self.PPGReadingLabel.text = "Reading"
             }
         }
+        //The finger is gone, we need to reset
         else if !bridge.fingerSensed() { // Fill in 0 for no data, if the finger is not there.
             PPG = 0.0
             DispatchQueue.main.async {
@@ -136,7 +145,7 @@ class FingerViewController: UIViewController {
         
     }
     
-    
+    //process an image. Whether there is a finger or not
     func processImageSwift(inputImage:CIImage) -> CIImage{
         
         
@@ -152,6 +161,8 @@ class FingerViewController: UIViewController {
         self.bridge.processImage()
         var distance:Int32 = 0
         var peaks:Int32 = 0
+        
+        //call the porcess finger method, true if there is a finger over the camera
         let finger = self.bridge.processFinger(&peaks, outD: &distance)
 
         if finger {
@@ -160,10 +171,8 @@ class FingerViewController: UIViewController {
             noFingerDetected()
         }
         
+        
         retImage = self.bridge.getImageComposite() // get back opencv processed part of the image (overlayed on original)
-        
-        
-        
         return retImage
     }
     func fingerDetected() {
@@ -216,9 +225,6 @@ class FingerViewController: UIViewController {
     }
     
     func getMaxPoint(startIndex:Int, endIndex:Int, arr:UnsafeMutablePointer<Float>) -> (Int, Float) {
-        
-//        var data = arr[10...11]
-//        var a:[Float] = data[startIndex...endIndex]
         let a = arr+startIndex
         var c: Float = .nan
         var i: vDSP_Length = 0
@@ -226,15 +232,5 @@ class FingerViewController: UIViewController {
         
         vDSP_maxvi(a, 1, &c, &i, n)
         return (startIndex + Int(i), Float(c))
-        
-//        var max = arr[startIndex]
-//        var maxIndex = startIndex
-//        for i in startIndex + 1...endIndex{
-//            if arr[i] > max {
-//                max = arr[i]
-//                maxIndex = i
-//            }
-//        }
-//        return (maxIndex, max)
     }
 }

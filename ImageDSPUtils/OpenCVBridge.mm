@@ -419,55 +419,65 @@ using namespace cv;
     
     return retImage;
 }
-
+//varaible to keep track of the redData
+//position we are in the array
 int pos = 0;
+
+//have we captured encough data
 bool capturedEnough = false;
 -(bool) capturedEnough{
     return capturedEnough;
 }
 
+//Is there a finger over the camera
 bool fingerSensed = false;
 -(bool) fingerSensed {
     return fingerSensed;
 }
 
-
+//return just the actual array that has the red data
 -(float*)getRedData{
     return red;
 }
+
+//reset the poistion to 0, should happen when the finger moves
 -(void)resetPos{
     pos = 0;
 }
+//Get the last red value, should be used to add oto the graph
 -(float)getLastRed{
     return lastRed;
 }
 
-
+//reset the arrays collecting data and move the pos back to the begining of the array
 -(void)resetBuffer {
     for (int i = 0; i < BUFFER_SIZE; i++) {
         red[i] = 0.0;
         green[i] = 0.0;
         blue[i] = 0.0;
     }
+    //It is imporant this is not 0, if it was 0 then the code might stop sensing a finger
     pos = skippedValues;
     capturedEnough = false;
 }
 
+//amoutn of data we are colecting
 const int BUFFER_SIZE = 200;
-
 -(int)getBufferSize {
     return BUFFER_SIZE;
 }
 
-const int beforeFlashIndex = 2;
-const int flashTurningOnIndex = 30;
-const int skippedValues = beforeFlashIndex + flashTurningOnIndex; //12
+
+const int beforeFlashIndex = 2;     //when a finger is detected we stay on for this many frames as the flash turns on
+const int flashTurningOnIndex = 30; //we will not include the first 30 frames in our analyis
+const int skippedValues = beforeFlashIndex + flashTurningOnIndex; //we will only insert into array with index pos - skippedValues
 
 float red[BUFFER_SIZE];
 float green[BUFFER_SIZE];
 float blue[BUFFER_SIZE];
 float lastRed = 0.0;
 
+//called every frame there is a finger
 -(bool)processFinger:(int *)peaksOut
                 outD:(int *)distOut {
     
